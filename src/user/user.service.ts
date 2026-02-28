@@ -10,6 +10,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma';
 import { genSaltSync, hashSync } from 'bcrypt';
 import { patch } from 'axios';
+import { User } from 'generated/prisma/client';
 
 @Injectable()
 export class UserService {
@@ -63,6 +64,21 @@ export class UserService {
 
   findAll() {
     return this.prismaService.user.findMany();
+  }
+
+  async findAllWithoutPasswords(): Promise<Omit<User, 'password'>[]> {
+    try {
+      const usersWithPasswords = await this.prismaService.user.findMany();
+
+      const usersWithoutPasswords = usersWithPasswords.map(
+        ({ password, ...rest }) => rest,
+      );
+
+      return usersWithoutPasswords;
+    } catch (error) {
+      this.logger.error('Ошибка при получении списка пользователей:', error);
+      throw new Error('Ошибка при получении списка пользователей.');
+    }
   }
 
   findById(id: string) {

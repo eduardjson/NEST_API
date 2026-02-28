@@ -26,6 +26,11 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @Get('all-users')
+  async findAllUsers() {
+    return this.userService.findAllWithoutPasswords();
+  }
+
   @Get('findOne/:id')
   findOne(@Param('id') id: string) {
     return this.userService.findById(id);
