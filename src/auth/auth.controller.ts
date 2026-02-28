@@ -55,6 +55,32 @@ export class AuthController {
     this.setRefreshTokenToCookies(tokens, res);
   }
 
+  @Public()
+  @Post('logout')
+  async logout(
+    @Cookies(REFRESH_TOKEN) refreshToken: string,
+    @Res() res: Response,
+  ) {
+    try {
+      if (!refreshToken) {
+        throw new UnauthorizedException(
+          'No valid Refresh Token found in cookie',
+        );
+      }
+
+      await this.authService.logout(refreshToken);
+
+      // Очистка cookie с Refresh Token
+      res.clearCookie(REFRESH_TOKEN, { path: '/' });
+
+      return res
+        .status(HttpStatus.OK)
+        .send({ message: 'Вы успешно вышли из системы!' });
+    } catch (err) {
+      return res.status(HttpStatus.UNAUTHORIZED).send({ error: err.message });
+    }
+  }
+
   @Get('refresh-tokens')
   async refreshTokens(
     @Cookies(REFRESH_TOKEN) refreshToken: string,

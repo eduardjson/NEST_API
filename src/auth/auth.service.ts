@@ -61,6 +61,20 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
+  async logout(refreshToken: string) {
+    const existingToken = await this.prismaService.token.findUnique({
+      where: { token: refreshToken },
+    });
+
+    if (existingToken) {
+      await this.prismaService.token.delete({
+        where: { token: refreshToken },
+      });
+    }
+
+    return true;
+  }
+
   async refreshTokens(refreshToken: string) {
     const token = await this.prismaService.token
       .delete({
