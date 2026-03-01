@@ -8,6 +8,8 @@ const PORT = process.env.PORT ?? 3000;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
+  // app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads' });
+
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
