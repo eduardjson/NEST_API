@@ -66,7 +66,6 @@ export class ProductController {
     await this.service.delete(id);
   }
 
-  // Загрузка изображений для продукта
   @Post(':id/images')
   @UseInterceptors(FilesInterceptor('images', 20, { storage }))
   @HttpCode(200)
