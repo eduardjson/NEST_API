@@ -1,0 +1,200 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+// generator clientDto {
+//   provider                        = "prisma-types-generator"
+//   output                          = "../../../packages/types/src/client"
+//   outputToNestJsResourceStructure = "true"
+//   flatResourceStructure           = "false"
+//   createDtoPrefix                 = "Create"
+//   updateDtoPrefix                 = "Update"
+//   dtoSuffix                       = "Dto"
+//   entityPrefix                    = ""
+//   entitySuffix                    = "Interface" 
+//   reExport                        = "true"      
+//   fileNamingStyle                 = "kebab"
+//   classValidation                 = "false"  
+//   noDependencies                  = "true"     
+//   outputType                      = "interface"  
+// }
+// generator enums {
+//   provider = "prisma-enums-generator"
+//   output   = "../../../packages/types/src/shared/enums.ts"
+//   isExport = true
+//   useComma = true
+// }
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique @map("user_name")
+  password  String
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  role      Role[]   @default([USER])
+  email     String   @unique
+  phone     String   @unique
+  age       Int      @default(0)
+  address   String   @default("address")
+  avatar    String   @default("no image")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  tokens    Token[]
+
+  @@map("users")
+}
+model Token {
+  token  String   @unique
+  expires    DateTime
+  userId String @map("user_id")
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tokens")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+model Product {
+  id           String @id @default(uuid())
+  title        String
+  description  String @default("Описание товара по дефолту")
+  category     String
+  manufacturer String
+  imageUrl     String
+  unit         String @default("шт") 
+  images ProductImage[] 
+  
+  @@map("products")
+  shipmentItems ShipmentItem[]
+  stockItems StockItem[]
+}
+model ProductImage {
+  id String @id @default(uuid()) 
+  productId String
+  url String
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@map("product_images")
+}
+model Message {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  userName  String
+  text      String
+  createdAt DateTime @default(now())
+  attachments Attachment[]
+}
+model Attachment {
+  id        String   @id @default(uuid())
+  messageId Int
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  fileName  String  
+  fileSize  Int      
+  fileType  String  
+  filePath  String   
+  uploadedAt DateTime @default(now())
+
+  @@map("attachments")
+}
+model Warehouse {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  address   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stockItems StockItem[]
+  shipments  Shipment[]
+
+  @@map("warehouses")
+}
+model StockItem {
+  id          String   @id @default(uuid())
+  productId   String   @map("product_id")
+  warehouseId String   @map("warehouse_id")
+  quantity    Int      @default(0)
+
+  purchasePrice  Float?  @map("purchase_price")  
+  estimatePrice  Float?  @map("estimate_price")
+  salePrice      Float?  @map("sale_price")       
+  discount       Float?  @default(0)            
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+
+  @@unique([productId, warehouseId])
+  @@map("stock_items")
+}
+
+model Object {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  address     String?
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  shipments Shipment[]
+
+  @@map("objects")
+}
+
+model Shipment {
+  id          String         @id @default(uuid())
+  warehouseId String         @map("warehouse_id")
+  objectId    String         @map("object_id")
+  status      ShipmentStatus @default(PENDING)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+  object    Object    @relation(fields: [objectId], references: [id])
+  items     ShipmentItem[]
+
+  @@map("shipments")
+}
+
+model ShipmentItem {
+  id         String   @id @default(uuid())
+  shipmentId String   @map("shipment_id")
+  productId  String   @map("product_id")
+  quantity   Int
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([shipmentId, productId])
+  @@map("shipment_items")
+}
+
+enum ShipmentStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum DocumentType {
+  SPECIFICATION 
+  DRAWING       
+  CONTRACT      
+  OTHER         
+}
+
+enum CostType {
+  MATERIAL 
+  LABOR     
+}
